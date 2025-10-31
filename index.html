@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My PDF Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: #f4f4f4;
+      font-family: sans-serif;
+    }
+    #pdf-viewer {
+      height: 100vh;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="pdf-viewer"></div>
+
+  <script async type="module">
+    import EmbedPDF from 'https://snippet.embedpdf.com/embedpdf.js';
+
+    EmbedPDF.init({
+      type: 'container',
+      target: document.getElementById('pdf-viewer'),
+      src: 'https://pertamina-officeless.oss-ap-southeast-5.aliyuncs.com/813/1.%20ivenue.pertamina.com%20-%20approver%20dan%20requestor.pdf', // Ganti dengan URL PDF kamu
+      fallbackLink: true,
+      style: {
+        width: '100%',
+        height: '100%',
+        border: 'none',
+        backgroundColor: '#fff'
+      }
+    });
+  </script>
+</body>
+</html>
