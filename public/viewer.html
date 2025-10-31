@@ -2,25 +2,131 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Simple PDF Embed</title>
+  <title>Pertamina PDF Viewer</title>
   <style>
     html, body {
       margin: 0;
       padding: 0;
       height: 100%;
+      background-color: #f9fafb;
+      font-family: system-ui, sans-serif;
       overflow: hidden;
     }
-    embed {
-      width: 100%;
-      height: 100%;
+
+    #toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background-color: #e60000;
+      color: white;
+      font-weight: 500;
+      height: 50px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    #toolbar button {
+      background: white;
+      color: #e60000;
       border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      margin-left: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    #pdf-viewer {
+      height: calc(100vh - 50px);
+      overflow: auto;
+      background: #fff;
+    }
+
+    canvas {
+      display: block;
+      margin: 0 auto;
+      border-bottom: 1px solid #eee;
     }
   </style>
 </head>
 <body>
-  <embed
-    src="https://pertamina-officeless.oss-ap-southeast-5.aliyuncs.com/813/1.%20ivenue.pertamina.com%20-%20approver%20dan%20requestor.pdf"
-    type="application/pdf"
-  />
+  <div id="toolbar">
+    <div>Dokumen: Approver & Requestor</div>
+    <div>
+      <button onclick="prevPage()">⬅️ Prev</button>
+      <button onclick="nextPage()">➡️ Next</button>
+      <button onclick="downloadPDF()">⬇️ Download</button>
+    </div>
+  </div>
+
+  <div id="pdf-viewer"></div>
+
+  <script src="pdfjs/pdf.js"></script>
+  <script>
+    const PDF_URL = "https://pertamina-officeless.oss-ap-southeast-5.aliyuncs.com/813/1.%20ivenue.pertamina.com%20-%20approver%20dan%20requestor.pdf";
+    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdfjs/pdf.worker.js';
+
+    let pdfDoc = null, pageNum = 1, pageRendering = false, pageNumPending = null;
+    const viewer = document.getElementById('pdf-viewer');
+
+    function renderPage(num) {
+      pageRendering = true;
+      pdfDoc.getPage(num).then(page => {
+        const viewport = page.getViewport({ scale: 1.5 });
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        viewer.innerHTML = '';
+        viewer.appendChild(canvas);
+
+        const renderContext = {
+          canvasContext: context,
+          viewport: viewport
+        };
+        const renderTask = page.render(renderContext);
+        renderTask.promise.then(() => {
+          pageRendering = false;
+          if (pageNumPending !== null) {
+            renderPage(pageNumPending);
+            pageNumPending = null;
+          }
+        });
+      });
+    }
+
+    function queueRenderPage(num) {
+      if (pageRendering) {
+        pageNumPending = num;
+      } else {
+        renderPage(num);
+      }
+    }
+
+    function prevPage() {
+      if (pageNum <= 1) return;
+      pageNum--;
+      queueRenderPage(pageNum);
+    }
+
+    function nextPage() {
+      if (pageNum >= pdfDoc.numPages) return;
+      pageNum++;
+      queueRenderPage(pageNum);
+    }
+
+    function downloadPDF() {
+      const link = document.createElement('a');
+      link.href = PDF_URL;
+      link.download = "Approver_Requestor.pdf";
+      link.click();
+    }
+
+    pdfjsLib.getDocument(PDF_URL).promise.then(pdfDoc_ => {
+      pdfDoc = pdfDoc_;
+      renderPage(pageNum);
+    });
+  </script>
 </body>
 </html>
