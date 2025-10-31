@@ -61,15 +61,16 @@
 
   <div id="pdf-viewer"></div>
 
-  <script src="pdfjs/pdf.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script>
     const PDF_URL = "https://pertamina-officeless.oss-ap-southeast-5.aliyuncs.com/813/1.%20ivenue.pertamina.com%20-%20approver%20dan%20requestor.pdf";
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdfjs/pdf.worker.js';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
     let pdfDoc = null, pageNum = 1, pageRendering = false, pageNumPending = null;
     const viewer = document.getElementById('pdf-viewer');
 
+    // Render a specific page
     function renderPage(num) {
       pageRendering = true;
       pdfDoc.getPage(num).then(page => {
@@ -78,7 +79,7 @@
         const context = canvas.getContext('2d');
         canvas.height = viewport.height;
         canvas.width = viewport.width;
-        viewer.innerHTML = '';
+        viewer.innerHTML = ''; // Clear previous page
         viewer.appendChild(canvas);
 
         const renderContext = {
@@ -93,9 +94,12 @@
             pageNumPending = null;
           }
         });
+      }).catch(err => {
+        console.error('Error rendering page:', err);
       });
     }
 
+    // Queue rendering of the next page
     function queueRenderPage(num) {
       if (pageRendering) {
         pageNumPending = num;
@@ -104,18 +108,21 @@
       }
     }
 
+    // Show previous page
     function prevPage() {
       if (pageNum <= 1) return;
       pageNum--;
       queueRenderPage(pageNum);
     }
 
+    // Show next page
     function nextPage() {
       if (pageNum >= pdfDoc.numPages) return;
       pageNum++;
       queueRenderPage(pageNum);
     }
 
+    // Download the PDF
     function downloadPDF() {
       const link = document.createElement('a');
       link.href = PDF_URL;
@@ -123,9 +130,13 @@
       link.click();
     }
 
+    // Load the PDF
     pdfjsLib.getDocument(PDF_URL).promise.then(pdfDoc_ => {
       pdfDoc = pdfDoc_;
       renderPage(pageNum);
+    }).catch(err => {
+      console.error('Error loading PDF:', err);
+      viewer.innerHTML = '<p style="color: red; text-align: center;">Failed to load PDF. Please check the URL or CORS settings.</p>';
     });
   </script>
 </body>
